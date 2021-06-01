@@ -16,6 +16,4 @@
 
 extern struct lfs_config pico_cfg;
 
-int pico_fs_size(struct lfs_config* c, lfs_size_t size);
-
 #endif // _PICO_HAL_

@@ -14,10 +14,7 @@
 
 #include "lfs.h"
 
-#include "pico_hal.h"
-
-// 256K of space for file system at top of pico flash
-#define FS_SIZE (PICO_FLASH_SIZE_BYTES / 8)
+#include "hal.h"
 
 const char* fn_template = "file%d.tst";
 const uint32_t n_files = 128;
@@ -27,12 +24,11 @@ int main(void) {
 
     // variables used by the filesystem
     lfs_file_t file;
+    lfs_t pico_lfs;
 
     // initialize the pico SDK
     stdio_init_all();
     printf("\033[H\033[J"); // try to clear the screen
-
-    pico_fs_size(FS_SIZE);
 
     // mount the filesystem
     int err = lfs_mount(&pico_lfs, &pico_cfg);

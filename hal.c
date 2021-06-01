@@ -12,7 +12,9 @@
 #include "hardware/flash.h"
 #include "hardware/regs/addressmap.h"
 
-#include "pico_hal.h"
+#include "hal.h"
+
+#define FS_SIZE (256 * 1024)
 
 static int pico_read(const struct lfs_config* c, lfs_block_t block, lfs_off_t off, void* buffer,
                      lfs_size_t size);
@@ -37,31 +39,23 @@ struct lfs_config pico_cfg = {
     .read_size = 1,
     .prog_size = FLASH_PAGE_SIZE,
     .block_size = FLASH_SECTOR_SIZE,
+    .block_count = FS_SIZE / FLASH_SECTOR_SIZE,
     .cache_size = FLASH_SECTOR_SIZE,
-    .lookahead_size = 16,
+    .lookahead_size = 32,
     .block_cycles = 500,
 };
 
 // Pico specific hardware abstraction functions
 
 // file system offset in flash
-static uint32_t fs_base = PICO_FLASH_SIZE_BYTES;
-
-int pico_fs_size(struct lfs_config* c, lfs_size_t size) {
-    (void)c;
-    if (size > (3 * PICO_FLASH_SIZE_BYTES / 4))
-        return -1;
-    fs_base = PICO_FLASH_SIZE_BYTES - size;
-    pico_cfg.block_count = size / pico_cfg.block_size;
-    return LFS_ERR_OK;
-}
+#define FS_BASE (PICO_FLASH_SIZE_BYTES - FS_SIZE)
 
 static int pico_read(const struct lfs_config* c, lfs_block_t block, lfs_off_t off, void* buffer,
                      lfs_size_t size) {
     (void)c;
     // read flash via XIP mapped space
     uint8_t* p =
-        (uint8_t*)(XIP_NOCACHE_NOALLOC_BASE + fs_base + (block * pico_cfg.block_size) + off);
+        (uint8_t*)(XIP_NOCACHE_NOALLOC_BASE + FS_BASE + (block * pico_cfg.block_size) + off);
     memcpy(buffer, p, size);
     return LFS_ERR_OK;
 }
@@ -71,7 +65,7 @@ static int pico_prog(const struct lfs_config* c, lfs_block_t block, lfs_off_t of
     (void)c;
     uint32_t p = (block * pico_cfg.block_size) + off;
     // program with SDK
-    flash_range_program(fs_base + p, buffer, size);
+    flash_range_program(FS_BASE + p, buffer, size);
     return LFS_ERR_OK;
 }
 
@@ -79,7 +73,7 @@ static int pico_erase(const struct lfs_config* c, lfs_block_t block) {
     uint32_t off = block * pico_cfg.block_size;
     (void)c;
     // erase with SDK
-    flash_range_erase(fs_base + off, pico_cfg.block_size);
+    flash_range_erase(FS_BASE + off, pico_cfg.block_size);
     return LFS_ERR_OK;
 }
 
