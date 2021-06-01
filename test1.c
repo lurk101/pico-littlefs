@@ -12,77 +12,87 @@
 #include "hardware/regs/addressmap.h"
 #include "pico/stdio.h"
 
-#include "lfs.h"
-
 #include "hal.h"
 
-const char* fn_template = "file%d.tst";
-const uint32_t n_files = 128;
+const char* fn_templ1 = "old%d.tst";
+const char* fn_templ2 = "new%d.tst";
+const uint32_t n_files = 32;
 
 // application entry point
 int main(void) {
 
     // variables used by the filesystem
-    lfs_file_t file;
-    lfs_t pico_lfs;
+    int file;
 
     // initialize the pico SDK
     stdio_init_all();
     printf("\033[H\033[J"); // try to clear the screen
 
     // mount the filesystem
-    int err = lfs_mount(&pico_lfs, &pico_cfg);
-
-    // reformat if we can't mount the filesystem
-    // this should only happen on the first boot
-    if (err) {
-        printf("1st time formatting\n");
-        lfs_format(&pico_lfs, &pico_cfg);
-        lfs_mount(&pico_lfs, &pico_cfg);
-    }
-    printf("FS size: %dK\n", (int)(pico_cfg.block_count * pico_cfg.block_size / 1024));
+    posix_mount();
 
     uint32_t i;
-    char fn[32];
+    char fn[32], fn2[32];
 
     printf("Creating %d files\n", (int)n_files);
+    hal_start();
     for (i = 0; i < n_files; i++) {
-        sprintf(fn, fn_template, i);
-        if (0 > lfs_file_open(&pico_lfs, &file, fn, LFS_O_RDWR | LFS_O_CREAT)) {
+        sprintf(fn, fn_templ1, i);
+        file = posix_open(fn, LFS_O_RDWR | LFS_O_CREAT);
+        if ((int)file < 0) {
             printf("open fails\n");
             return -1;
         }
         // write the file name
-        if ((strlen(fn) + 1) != (uint32_t)lfs_file_write(&pico_lfs, &file, fn, strlen(fn) + 1)) {
+        if ((strlen(fn) + 1) != (uint32_t)posix_write(file, fn, strlen(fn) + 1)) {
             printf("write fails\n");
             return -1;
         }
-        lfs_file_close(&pico_lfs, &file);
+        posix_close(file);
     }
+    printf("elapsed %f seconds\n", hal_elapsed());
+
+    printf("Renaming %d files\n", (int)n_files);
+    hal_start();
+    for (i = 0; i < n_files; i++) {
+        uint32_t j = i ^ (0x55 & (n_files - 1));
+        sprintf(fn, fn_templ1, j);
+        sprintf(fn2, fn_templ2, j);
+        if (posix_rename(fn, fn2) < 0) {
+            printf("rename fails\n");
+            return -1;
+        }
+    }
+    printf("elapsed %f seconds\n", hal_elapsed());
 
     printf("Verifying then removing %d files\n", (int)n_files);
     char buf[32];
+    hal_start();
     for (i = 0; i < n_files; i++) {
         // scramble the file name order
-        sprintf(fn, fn_template, i ^ (0xaa & (n_files - 1)));
+        uint32_t j = i ^ (0xaa & (n_files - 1));
+        sprintf(fn, fn_templ1, j);
+        sprintf(fn2, fn_templ2, j);
         // verify the file's content
-        if (0 > lfs_file_open(&pico_lfs, &file, fn, LFS_O_RDONLY)) {
+        file = posix_open(fn2, LFS_O_RDONLY);
+        if (file < 0) {
             printf("open fails\n");
             return -1;
         }
-        lfs_size_t len = lfs_file_read(&pico_lfs, &file, buf, sizeof(buf));
+        lfs_size_t len = posix_read(file, buf, sizeof(buf));
         if ((len != strlen(fn) + 1) || (strcmp(fn, buf) != 0)) {
             printf("read fails\n");
             return -1;
         }
-        lfs_file_close(&pico_lfs, &file);
-        if (0 > lfs_remove(&pico_lfs, fn)) {
+        posix_close(file);
+        if (posix_remove(fn2) < 0) {
             printf("remove fails\n");
             return -1;
         }
     }
+    printf("elapsed %f seconds\n", hal_elapsed());
     // release any resources we were using
-    lfs_unmount(&pico_lfs);
+    posix_unmount();
 
     printf("pass\n");
 }

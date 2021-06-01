@@ -22,45 +22,40 @@ int main(void) {
     // increment the boot count with each invocation
 
     lfs_size_t boot_count;
-    lfs_t pico_lfs;
 
     // variables used by the filesystem
-    lfs_file_t file;
+    int file;
 
     // initialize the pico SDK
     stdio_init_all();
     printf("\033[H\033[J"); // try to clear the screen
 
     // mount the filesystem
-    int err = lfs_mount(&pico_lfs, &pico_cfg);
-
-    // reformat if we can't mount the filesystem
-    // this should only happen on the first boot
-    if (err) {
-        printf("1st time formatting\n");
-        lfs_format(&pico_lfs, &pico_cfg);
-        lfs_mount(&pico_lfs, &pico_cfg);
+    if (posix_mount() != LFS_ERR_OK) {
         // create the boot count file
         boot_count = 0;
-        lfs_file_open(&pico_lfs, &file, "boot_count", LFS_O_RDWR | LFS_O_CREAT);
-        lfs_file_write(&pico_lfs, &file, &boot_count, sizeof(boot_count));
-        lfs_file_close(&pico_lfs, &file);
+        file = posix_open("boot_count", LFS_O_RDWR | LFS_O_CREAT);
+        posix_write(file, &boot_count, sizeof(boot_count));
+        posix_close(file);
     }
-    printf("FS size: %dK\n", (int)(pico_cfg.block_count * pico_cfg.block_size / 1024));
+    struct posix_fsstat_t stat;
+    posix_fsstat(&stat);
+    printf("FS: blocks %d, block size %d, used %d\n", (int)stat.block_count, (int)stat.block_size,
+           (int)stat.blocks_used);
     // read current count
-    lfs_file_open(&pico_lfs, &file, "boot_count", LFS_O_RDWR);
-    lfs_file_read(&pico_lfs, &file, &boot_count, sizeof(boot_count));
+    file = posix_open("boot_count", LFS_O_RDWR);
+    posix_read(file, &boot_count, sizeof(boot_count));
 
     // update boot count
     boot_count += 1;
-    lfs_file_rewind(&pico_lfs, &file);
-    lfs_file_write(&pico_lfs, &file, &boot_count, sizeof(boot_count));
+    posix_rewind(file);
+    posix_write(file, &boot_count, sizeof(boot_count));
 
     // remember the storage is not updated until the file is closed successfully
-    lfs_file_close(&pico_lfs, &file);
+    posix_close(file);
 
     // release any resources we were using
-    lfs_unmount(&pico_lfs);
+    posix_unmount();
 
     // print the boot count
     printf("boot_count: %d\n", (int)boot_count);

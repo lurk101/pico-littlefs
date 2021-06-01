@@ -29,30 +29,21 @@ int main(void) {
     const char* fn = "big_file";
 
     // variables used by the filesystem
-    lfs_t pico_lfs;
-    lfs_file_t file;
+    int file;
 
     // initialize the pico SDK
     stdio_init_all();
     printf("\033[H\033[J"); // try to clear the screen
 
     // mount the filesystem
-    int err = lfs_mount(&pico_lfs, &pico_cfg);
-
-    // reformat if we can't mount the filesystem
-    // this should only happen on the first boot
-    if (err) {
-        printf("1st time formatting\n");
-        lfs_format(&pico_lfs, &pico_cfg);
-        lfs_mount(&pico_lfs, &pico_cfg);
-    }
-    printf("FS size: %dK\n", (int)(pico_cfg.block_count * pico_cfg.block_size / 1024));
+    posix_mount();
 
     uint32_t i, n;
 
     printf("Creating %dK file\n", (int)(FILE_SIZE / 1024));
-    uint32_t start = time_us_32();
-    if (0 > lfs_file_open(&pico_lfs, &file, fn, LFS_O_WRONLY | LFS_O_CREAT)) {
+    hal_start();
+    file = posix_open(fn, LFS_O_WRONLY | LFS_O_CREAT);
+    if (file < 0) {
         printf("open fails\n");
         return -1;
     }
@@ -61,30 +52,31 @@ int main(void) {
     for (n = 0; n < FILE_SIZE; n += sizeof(buf)) {
         for (i = 0; i < BUF_WRDS; i++)
             buf[i] = rand();
-        lfs_size_t len = lfs_file_write(&pico_lfs, &file, buf, sizeof(buf));
+        lfs_size_t len = posix_write(file, buf, sizeof(buf));
         if (sizeof(buf) != (uint32_t)len) {
             printf("write fails at %d returned %d\n", (int)n, (int)len);
             break;
         }
     }
-    lfs_file_close(&pico_lfs, &file);
+    posix_close(file);
     if (n < FILE_SIZE) {
-        lfs_remove(&pico_lfs, fn);
-        lfs_unmount(&pico_lfs);
+        posix_remove(fn);
+        posix_unmount();
         return -1;
     }
-    printf("elapsed %f seconds\n", (time_us_32() - start) / 1000000.0);
+    printf("elapsed %f seconds\n", hal_elapsed());
 
     printf("reading %dK file\n", (int)(FILE_SIZE / 1024));
-    start = time_us_32();
-    if (0 > lfs_file_open(&pico_lfs, &file, fn, LFS_O_RDONLY)) {
+    hal_start();
+    file = posix_open(fn, LFS_O_RDONLY);
+    if (file < 0) {
         printf("open fails\n");
         return -1;
     }
     n = FILE_SIZE;
     srand(12345);
     for (n = 0; n < FILE_SIZE; n += sizeof(buf)) {
-        lfs_size_t len = lfs_file_read(&pico_lfs, &file, buf, sizeof(buf));
+        lfs_size_t len = posix_read(file, buf, sizeof(buf));
         if (sizeof(buf) != (uint32_t)len) {
             printf("read fails at %d returned %d\n", (int)n, (int)len);
             break;
@@ -95,16 +87,16 @@ int main(void) {
                 break;
             }
     }
-    lfs_file_close(&pico_lfs, &file);
-    printf("elapsed %f seconds\n", (time_us_32() - start) / 1000000.0);
+    posix_close(file);
+    printf("elapsed %f seconds\n", hal_elapsed());
 
     printf("removing file\n");
-    if (0 > lfs_remove(&pico_lfs, fn)) {
+    if (posix_remove(fn) < 0) {
         printf("remove fails\n");
         return -1;
     }
     // release any resources we were using
-    lfs_unmount(&pico_lfs);
+    posix_unmount();
     if (n < FILE_SIZE) {
         return -1;
     }

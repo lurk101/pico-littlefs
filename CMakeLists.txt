@@ -5,21 +5,21 @@ set(CMAKE_CXX_STANDARD 17)
 
 include(pico_sdk_import.cmake)
 
-project(littlefs C CXX ASM)
+project(example C CXX ASM)
 
 pico_sdk_init()
 
 add_subdirectory(lfs)
 
-add_executable(littlefs littlefs.c hal.c)
+add_executable(example example.c hal.c)
 add_executable(test1 test1.c hal.c)
 add_executable(test2 test2.c hal.c)
 
-pico_enable_stdio_uart(littlefs 1)
-pico_enable_stdio_usb(littlefs 0)
+pico_enable_stdio_uart(example 1)
+pico_enable_stdio_usb(example 0)
 
-target_link_libraries(littlefs PUBLIC lfs pico_stdlib hardware_flash)
-target_include_directories(littlefs PUBLIC lfs/include)
+target_link_libraries(example PUBLIC lfs pico_stdlib hardware_flash)
+target_include_directories(example PUBLIC lfs/include)
 
 target_link_libraries(test1 PUBLIC lfs pico_stdlib hardware_flash)
 target_include_directories(test1 PUBLIC lfs/include)
@@ -27,7 +27,7 @@ target_include_directories(test1 PUBLIC lfs/include)
 target_link_libraries(test2 PUBLIC lfs pico_stdlib hardware_flash)
 target_include_directories(test2 PUBLIC lfs/include)
 
-pico_add_extra_outputs(littlefs)
+pico_add_extra_outputs(example)
 pico_add_extra_outputs(test1)
 pico_add_extra_outputs(test2)
 
