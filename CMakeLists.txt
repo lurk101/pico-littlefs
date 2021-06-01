@@ -11,9 +11,9 @@ pico_sdk_init()
 
 add_subdirectory(lfs)
 
-add_executable(littlefs littlefs.c)
-add_executable(test1 test1.c)
-add_executable(test2 test2.c)
+add_executable(littlefs littlefs.c pico_hal.c)
+add_executable(test1 test1.c pico_hal.c)
+add_executable(test2 test2.c pico_hal.c)
 
 pico_enable_stdio_uart(littlefs 1)
 pico_enable_stdio_usb(littlefs 0)
