@@ -31,13 +31,6 @@ pico_add_extra_outputs(example)
 pico_add_extra_outputs(test1)
 pico_add_extra_outputs(test2)
 
-if ("${CMAKE_BUILD_TYPE}" MATCHES "Release")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffunction-sections -fdata-sections -Wl,–gc-sections -O3")
-endif()
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
 
 message(STATUS "Build type ${CMAKE_BUILD_TYPE}")
-message(STATUS "CFlags ${CMAKE_C_FLAGS}")
-message(STATUS "${PICO_COMPILER_DIR}")
-message(STATUS "${PICO_COMPILER_CC}")
-
