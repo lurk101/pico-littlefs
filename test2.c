@@ -36,7 +36,12 @@ int main(void) {
     printf("\033[H\033[J"); // try to clear the screen
 
     // mount the filesystem
-    posix_mount();
+    posix_mount(false);
+
+    struct posix_fsstat_t stat;
+    posix_fsstat(&stat);
+    printf("FS: blocks %d, block size %d, used %d\n", (int)stat.block_count, (int)stat.block_size,
+           (int)stat.blocks_used);
 
     uint32_t i, n;
 
@@ -58,6 +63,9 @@ int main(void) {
             break;
         }
     }
+    posix_fsstat(&stat);
+    printf("FS: blocks %d, block size %d, used %d\n", (int)stat.block_count, (int)stat.block_size,
+           (int)stat.blocks_used);
     posix_close(file);
     if (n < FILE_SIZE) {
         posix_remove(fn);
@@ -95,6 +103,9 @@ int main(void) {
         printf("remove fails\n");
         return -1;
     }
+    posix_fsstat(&stat);
+    printf("FS: blocks %d, block size %d, used %d\n", (int)stat.block_count, (int)stat.block_size,
+           (int)stat.blocks_used);
     // release any resources we were using
     posix_unmount();
     if (n < FILE_SIZE) {

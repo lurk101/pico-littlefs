@@ -11,22 +11,15 @@ pico_sdk_init()
 
 add_subdirectory(lfs)
 
-add_executable(example example.c)
-add_executable(test1 test1.c)
-add_executable(test2 test2.c)
+macro(addtarget name)
+    add_executable(${name} ${name}.c)
+    pico_enable_stdio_uart(${name} 1)
+    pico_enable_stdio_usb(${name} 0)
+    target_link_libraries(${name} PUBLIC lfs pico_stdlib)
+    target_include_directories(${name} PUBLIC lfs)
+    pico_add_extra_outputs(${name})
+endmacro()
 
-pico_enable_stdio_uart(example 1)
-pico_enable_stdio_usb(example 0)
-
-target_link_libraries(example PUBLIC lfs pico_stdlib)
-target_include_directories(example PUBLIC lfs)
-
-target_link_libraries(test1 PUBLIC lfs pico_stdlib)
-target_include_directories(test1 PUBLIC lfs)
-
-target_link_libraries(test2 PUBLIC lfs pico_stdlib)
-target_include_directories(test2 PUBLIC lfs)
-
-pico_add_extra_outputs(example)
-pico_add_extra_outputs(test1)
-pico_add_extra_outputs(test2)
+addtarget(example)
+addtarget(test1)
+addtarget(test2)

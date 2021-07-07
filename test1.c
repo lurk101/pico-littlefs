@@ -29,7 +29,7 @@ int main(void) {
     printf("\033[H\033[J"); // try to clear the screen
 
     // mount the filesystem
-    posix_mount();
+    posix_mount(false);
 
     uint32_t i;
     char fn[32], fn2[32];
@@ -48,9 +48,15 @@ int main(void) {
             printf("write fails\n");
             return -1;
         }
+        posix_write(file, (char*)0x10000000, 1024);
         posix_close(file);
     }
     printf("elapsed %f seconds\n", hal_elapsed());
+
+    struct posix_fsstat_t stat;
+    posix_fsstat(&stat);
+    printf("FS: blocks %d, block size %d, used %d\n", (int)stat.block_count, (int)stat.block_size,
+           (int)stat.blocks_used);
 
     printf("Renaming %d files\n", (int)n_files);
     hal_start();
@@ -64,6 +70,10 @@ int main(void) {
         }
     }
     printf("elapsed %f seconds\n", hal_elapsed());
+
+    posix_fsstat(&stat);
+    printf("FS: blocks %d, block size %d, used %d\n", (int)stat.block_count, (int)stat.block_size,
+           (int)stat.blocks_used);
 
     printf("Verifying then removing %d files\n", (int)n_files);
     char buf[32];
@@ -80,7 +90,7 @@ int main(void) {
             return -1;
         }
         lfs_size_t len = posix_read(file, buf, sizeof(buf));
-        if ((len != strlen(fn) + 1) || (strcmp(fn, buf) != 0)) {
+        if (strcmp(fn, buf) != 0) {
             printf("read fails\n");
             return -1;
         }
@@ -92,6 +102,11 @@ int main(void) {
     }
     printf("elapsed %f seconds\n", hal_elapsed());
     // release any resources we were using
+
+    posix_fsstat(&stat);
+    printf("FS: blocks %d, block size %d, used %d\n", (int)stat.block_count, (int)stat.block_size,
+           (int)stat.blocks_used);
+
     posix_unmount();
 
     printf("pass\n");

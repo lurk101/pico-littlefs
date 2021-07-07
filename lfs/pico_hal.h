@@ -30,9 +30,7 @@ struct posix_fsstat_t {
 };
 
 // implemented
-int posix_mount(void);
-int posix_format(void);
-int posix_mount(void);
+int posix_mount(bool format);
 int posix_unmount(void);
 int posix_remove(const char* path);
 int posix_open(const char* path, int flags);

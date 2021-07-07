@@ -98,17 +98,11 @@ float hal_elapsed(void) { return (time_us_32() - tm) / 1000000.0; }
 
 int posix_errno;
 
-int posix_mount(void) {
-    // mount the filesystem
-    int err = lfs_mount(&pico_lfs, &pico_cfg);
-
-    // reformat if we can't mount the filesystem
-    // this should only happen on the first boot
-    if (err) {
+int posix_mount(bool format) {
+    if (format)
         lfs_format(&pico_lfs, &pico_cfg);
-        lfs_mount(&pico_lfs, &pico_cfg);
-    }
-    return err;
+    // mount the filesystem
+    return lfs_mount(&pico_lfs, &pico_cfg);
 }
 
 int posix_open(const char* path, int flags) {
