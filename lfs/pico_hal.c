@@ -13,7 +13,7 @@
 #include "hardware/regs/addressmap.h"
 #include "pico/time.h"
 
-#include "hal.h"
+#include "pico_hal.h"
 
 #define FS_SIZE (256 * 1024)
 
@@ -128,11 +128,11 @@ int posix_close(int file) {
     lfs_free((lfs_file_t*)file);
 }
 
-lfs_ssize_t posix_write(int file, const void* buffer, lfs_size_t size) {
+lfs_size_t posix_write(int file, const void* buffer, lfs_size_t size) {
     return lfs_file_write(&pico_lfs, (lfs_file_t*)file, buffer, size);
 }
 
-lfs_ssize_t posix_read(int file, void* buffer, lfs_size_t size) {
+lfs_size_t posix_read(int file, void* buffer, lfs_size_t size) {
     return lfs_file_read(&pico_lfs, (lfs_file_t*)file, buffer, size);
 }
 
@@ -152,3 +152,13 @@ int posix_fsstat(struct posix_fsstat_t* stat) {
     stat->blocks_used = lfs_fs_size(&pico_lfs);
     return LFS_ERR_OK;
 }
+
+lfs_soff_t posix_lseek(int file, lfs_soff_t off, int whence) {
+    return lfs_file_seek(&pico_lfs, (lfs_file_t*)file, off, whence);
+}
+
+int posix_truncate(int file, lfs_off_t size) {
+    return lfs_file_truncate(&pico_lfs, (lfs_file_t*)file, size);
+}
+
+lfs_soff_t posix_tell(int file) { return lfs_file_tell(&pico_lfs, (lfs_file_t*)file); }

@@ -16,7 +16,7 @@
 
 #include "lfs.h"
 
-#include "hal.h"
+#include "pico_hal.h"
 
 #define FILE_SIZE (200 * 1024)
 #define BUF_WRDS (1024 / sizeof(uint32_t))

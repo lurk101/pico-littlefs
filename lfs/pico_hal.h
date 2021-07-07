@@ -40,6 +40,11 @@ int posix_close(int file);
 int posix_fsstat(struct posix_fsstat_t* stat);
 int posix_rewind(int file);
 int posix_rename(const char* oldpath, const char* newpath);
+lfs_size_t posix_read(int file, void* buffer, lfs_size_t size);
+lfs_size_t posix_write(int file, const void* buffer, lfs_size_t size);
+lfs_soff_t posix_lseek(int file, lfs_soff_t off, int whence);
+int posix_truncate(int file, lfs_off_t size);
+lfs_soff_t posix_tell(int file);
 
 // to do
 int posix_stat(const char* path, struct lfs_info* info);
@@ -48,11 +53,6 @@ int posix_setattr(const char* path, uint8_t type, const void* buffer, lfs_size_t
 int posix_removeattr(const char* path, uint8_t type);
 int posix_opencfg(const char* path, int flags, const struct lfs_file_config* config);
 int posix_sync(int file);
-lfs_ssize_t posix_read(int file, void* buffer, lfs_size_t size);
-lfs_ssize_t posix_write(int file, const void* buffer, lfs_size_t size);
-lfs_soff_t posix_lseek(int file, lfs_soff_t off, int whence);
-int posix_truncate(int file, lfs_off_t size);
-lfs_soff_t posix_tell(int file);
 lfs_soff_t posix_size(int file);
 int posix_mkdir(const char* path);
 int posix_dir_open(lfs_dir_t* dir, const char* path);

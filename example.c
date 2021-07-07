@@ -14,7 +14,7 @@
 
 #include "lfs.h"
 
-#include "hal.h"
+#include "pico_hal.h"
 
 // application entry point
 int main(void) {
