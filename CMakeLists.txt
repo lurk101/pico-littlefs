@@ -9,14 +9,13 @@ project(example C CXX ASM)
 
 pico_sdk_init()
 
-add_subdirectory(lfs)
-
 macro(addtarget name)
-    add_executable(${name} ${name}.c)
+    add_executable(${name} ${name}.c
+        lfs/lfs.c  lfs/lfs.h  lfs/lfs_util.c  lfs/lfs_util.h  lfs/pico_hal.c  lfs/pico_hal.h)
     pico_enable_stdio_uart(${name} 1)
     pico_enable_stdio_usb(${name} 0)
-    target_link_libraries(${name} PUBLIC lfs pico_stdlib)
-    target_include_directories(${name} PUBLIC lfs)
+    target_link_libraries(${name} PUBLIC pico_stdlib hardware_flash)
+    target_include_directories(${name} PUBLIC hardware_flash lfs)
     pico_add_extra_outputs(${name})
 endmacro()
 
