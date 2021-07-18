@@ -14,7 +14,6 @@
 #include "pico/stdlib.h"
 #include "pico/time.h"
 
-#include "lfs/lfs.h"
 #include "lfs/pico_hal.h"
 
 #define FILE_SIZE (200 * 1024)

@@ -12,7 +12,7 @@
 #include "hardware/regs/addressmap.h"
 #include "pico/stdio.h"
 
-#include "pico_hal.h"
+#include "lfs/pico_hal.h"
 
 const char* fn_templ1 = "old%d.tst";
 const char* fn_templ2 = "new%d.tst";

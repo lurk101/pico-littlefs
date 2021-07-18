@@ -1,4 +1,4 @@
-file(GLOB LFS_SRCS ${PROJECT_SOURCE_DIR}/lfs/*.c ${PROJECT_SOURCE_DIR}/lfs/*.h)
+file(GLOB LFS_SRCS ${PROJECT_SOURCE_DIR}/lfs/*.c ${PROJECT_SOURCE_DIR}/lfs/lfs/*.h)
 
 add_library(lfs INTERFACE)
 target_include_directories(lfs INTERFACE ${CMAKE_CURRENT_LIST_DIR})

@@ -12,9 +12,7 @@
 #include "hardware/regs/addressmap.h"
 #include "pico/stdio.h"
 
-#include "lfs.h"
-
-#include "pico_hal.h"
+#include "lfs/pico_hal.h"
 
 // application entry point
 int main(void) {
