@@ -156,3 +156,47 @@ int pico_truncate(int file, lfs_off_t size) {
 }
 
 lfs_soff_t pico_tell(int file) { return lfs_file_tell(&pico_lfs, (lfs_file_t*)file); }
+
+int pico_stat(const char* path, struct lfs_info* info) { return lfs_stat(&pico_lfs, path, info); }
+
+lfs_ssize_t pico_getattr(const char* path, uint8_t type, void* buffer, lfs_size_t size) {
+    return lfs_getattr(&pico_lfs, path, type, buffer, size);
+}
+
+int pico_setattr(const char* path, uint8_t type, const void* buffer, lfs_size_t size) {
+    return lfs_setattr(&pico_lfs, path, type, buffer, size);
+}
+
+int pico_removeattr(const char* path, uint8_t type) {
+    return lfs_removeattr(&pico_lfs, path, type);
+}
+
+int pico_opencfg(int file, const char* path, int flags, const struct lfs_file_config* config) {
+    return lfs_file_opencfg(&pico_lfs, (lfs_file_t*)file, path, flags, config);
+}
+
+int pico_fflush(int file) { return lfs_file_sync(&pico_lfs, (lfs_file_t*)file); }
+
+lfs_soff_t pico_size(int file) { return lfs_file_size(&pico_lfs, (lfs_file_t*)file); }
+
+int pico_mkdir(const char* path) { return lfs_mkdir(&pico_lfs, path); }
+
+int pico_dir_open(int dir, const char* path) {
+    return lfs_dir_open(&pico_lfs, (lfs_dir_t*)dir, path);
+}
+
+int pico_dir_close(int dir) { return lfs_dir_close(&pico_lfs, (lfs_dir_t*)dir); }
+
+int pico_dir_read(int dir, struct lfs_info* info) {
+    return lfs_dir_read(&pico_lfs, (lfs_dir_t*)dir, info);
+}
+
+int pico_dir_seek(int dir, lfs_off_t off) { return lfs_dir_seek(&pico_lfs, (lfs_dir_t*)dir, off); }
+
+lfs_soff_t pico_dir_tell(int dir) { return lfs_dir_tell(&pico_lfs, (lfs_dir_t*)dir); }
+
+int pico_dir_rewind(int dir) { return lfs_dir_rewind(&pico_lfs, (lfs_dir_t*)dir); }
+
+int pico_fs_traverse(int (*cb)(void*, lfs_block_t), void* data) {
+    return lfs_fs_traverse(&pico_lfs, cb, data);
+}

@@ -54,18 +54,17 @@ int pico_stat(const char* path, struct lfs_info* info);
 lfs_ssize_t pico_getattr(const char* path, uint8_t type, void* buffer, lfs_size_t size);
 int pico_setattr(const char* path, uint8_t type, const void* buffer, lfs_size_t size);
 int pico_removeattr(const char* path, uint8_t type);
-int pico_opencfg(const char* path, int flags, const struct lfs_file_config* config);
-int pico_sync(int file);
+int pico_opencfg(int file, const char* path, int flags, const struct lfs_file_config* config);
+int pico_fflush(int file);
 lfs_soff_t pico_size(int file);
 int pico_mkdir(const char* path);
-int pico_dir_open(lfs_dir_t* dir, const char* path);
-int pico_dir_close(lfs_dir_t* dir);
-int pico_dir_read(lfs_dir_t* dir, struct lfs_info* info);
-int pico_dir_seek(lfs_dir_t* dir, lfs_off_t off);
-lfs_soff_t pico_dir_tell(lfs_dir_t* dir);
-int pico_dir_rewind(lfs_dir_t* dir);
+int pico_dir_open(int dir, const char* path);
+int pico_dir_close(int dir);
+int pico_dir_read(int dir, struct lfs_info* info);
+int pico_dir_seek(int dir, lfs_off_t off);
+lfs_soff_t pico_dir_tell(int dir);
+int pico_dir_rewind(int dir);
 int pico_fs_traverse(int (*cb)(void*, lfs_block_t), void* data);
-int pico_migrate(void);
 
 #ifdef __cplusplus
 }
