@@ -29,7 +29,7 @@ int main(void) {
     printf("\033[H\033[J"); // try to clear the screen
 
     // mount the filesystem
-    posix_mount(false);
+    pico_mount(false);
 
     uint32_t i;
     char fn[32], fn2[32];
@@ -38,23 +38,23 @@ int main(void) {
     hal_start();
     for (i = 0; i < n_files; i++) {
         sprintf(fn, fn_templ1, i);
-        file = posix_open(fn, LFS_O_RDWR | LFS_O_CREAT);
+        file = pico_open(fn, LFS_O_RDWR | LFS_O_CREAT);
         if ((int)file < 0) {
             printf("open fails\n");
             return -1;
         }
         // write the file name
-        if ((strlen(fn) + 1) != (uint32_t)posix_write(file, fn, strlen(fn) + 1)) {
+        if ((strlen(fn) + 1) != (uint32_t)pico_write(file, fn, strlen(fn) + 1)) {
             printf("write fails\n");
             return -1;
         }
-        posix_write(file, (char*)0x10000000, 1024);
-        posix_close(file);
+        pico_write(file, (char*)0x10000000, 1024);
+        pico_close(file);
     }
     printf("elapsed %f seconds\n", hal_elapsed());
 
-    struct posix_fsstat_t stat;
-    posix_fsstat(&stat);
+    struct pico_fsstat_t stat;
+    pico_fsstat(&stat);
     printf("FS: blocks %d, block size %d, used %d\n", (int)stat.block_count, (int)stat.block_size,
            (int)stat.blocks_used);
 
@@ -64,14 +64,14 @@ int main(void) {
         uint32_t j = i ^ (0x55 & (n_files - 1));
         sprintf(fn, fn_templ1, j);
         sprintf(fn2, fn_templ2, j);
-        if (posix_rename(fn, fn2) < 0) {
+        if (pico_rename(fn, fn2) < 0) {
             printf("rename fails\n");
             return -1;
         }
     }
     printf("elapsed %f seconds\n", hal_elapsed());
 
-    posix_fsstat(&stat);
+    pico_fsstat(&stat);
     printf("FS: blocks %d, block size %d, used %d\n", (int)stat.block_count, (int)stat.block_size,
            (int)stat.blocks_used);
 
@@ -84,18 +84,18 @@ int main(void) {
         sprintf(fn, fn_templ1, j);
         sprintf(fn2, fn_templ2, j);
         // verify the file's content
-        file = posix_open(fn2, LFS_O_RDONLY);
+        file = pico_open(fn2, LFS_O_RDONLY);
         if (file < 0) {
             printf("open fails\n");
             return -1;
         }
-        lfs_size_t len = posix_read(file, buf, sizeof(buf));
+        lfs_size_t len = pico_read(file, buf, sizeof(buf));
         if (strcmp(fn, buf) != 0) {
             printf("read fails\n");
             return -1;
         }
-        posix_close(file);
-        if (posix_remove(fn2) < 0) {
+        pico_close(file);
+        if (pico_remove(fn2) < 0) {
             printf("remove fails\n");
             return -1;
         }
@@ -103,11 +103,11 @@ int main(void) {
     printf("elapsed %f seconds\n", hal_elapsed());
     // release any resources we were using
 
-    posix_fsstat(&stat);
+    pico_fsstat(&stat);
     printf("FS: blocks %d, block size %d, used %d\n", (int)stat.block_count, (int)stat.block_size,
            (int)stat.blocks_used);
 
-    posix_unmount();
+    pico_unmount();
 
     printf("pass\n");
 }

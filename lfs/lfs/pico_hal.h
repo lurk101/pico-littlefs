@@ -14,52 +14,61 @@
 
 #include "lfs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // utility functions
 
 void hal_start(void);
+
 float hal_elapsed(void);
 
 // posix emulation
 
-extern int posix_errno;
+extern int pico_errno;
 
-struct posix_fsstat_t {
+struct pico_fsstat_t {
     lfs_size_t block_size;
     lfs_size_t block_count;
     lfs_size_t blocks_used;
 };
 
 // implemented
-int posix_mount(bool format);
-int posix_unmount(void);
-int posix_remove(const char* path);
-int posix_open(const char* path, int flags);
-int posix_close(int file);
-int posix_fsstat(struct posix_fsstat_t* stat);
-int posix_rewind(int file);
-int posix_rename(const char* oldpath, const char* newpath);
-lfs_size_t posix_read(int file, void* buffer, lfs_size_t size);
-lfs_size_t posix_write(int file, const void* buffer, lfs_size_t size);
-lfs_soff_t posix_lseek(int file, lfs_soff_t off, int whence);
-int posix_truncate(int file, lfs_off_t size);
-lfs_soff_t posix_tell(int file);
+int pico_mount(bool format);
+int pico_unmount(void);
+int pico_remove(const char* path);
+int pico_open(const char* path, int flags);
+int pico_close(int file);
+int pico_fsstat(struct pico_fsstat_t* stat);
+int pico_rewind(int file);
+int pico_rename(const char* oldpath, const char* newpath);
+lfs_size_t pico_read(int file, void* buffer, lfs_size_t size);
+lfs_size_t pico_write(int file, const void* buffer, lfs_size_t size);
+lfs_soff_t pico_lseek(int file, lfs_soff_t off, int whence);
+int pico_truncate(int file, lfs_off_t size);
+lfs_soff_t pico_tell(int file);
 
-// to do
-int posix_stat(const char* path, struct lfs_info* info);
-lfs_ssize_t posix_getattr(const char* path, uint8_t type, void* buffer, lfs_size_t size);
-int posix_setattr(const char* path, uint8_t type, const void* buffer, lfs_size_t size);
-int posix_removeattr(const char* path, uint8_t type);
-int posix_opencfg(const char* path, int flags, const struct lfs_file_config* config);
-int posix_sync(int file);
-lfs_soff_t posix_size(int file);
-int posix_mkdir(const char* path);
-int posix_dir_open(lfs_dir_t* dir, const char* path);
-int posix_dir_close(lfs_dir_t* dir);
-int posix_dir_read(lfs_dir_t* dir, struct lfs_info* info);
-int posix_dir_seek(lfs_dir_t* dir, lfs_off_t off);
-lfs_soff_t posix_dir_tell(lfs_dir_t* dir);
-int posix_dir_rewind(lfs_dir_t* dir);
-int posix_fs_traverse(int (*cb)(void*, lfs_block_t), void* data);
-int posix_migrate(void);
+// untested
+int pico_stat(const char* path, struct lfs_info* info);
+lfs_ssize_t pico_getattr(const char* path, uint8_t type, void* buffer, lfs_size_t size);
+int pico_setattr(const char* path, uint8_t type, const void* buffer, lfs_size_t size);
+int pico_removeattr(const char* path, uint8_t type);
+int pico_opencfg(const char* path, int flags, const struct lfs_file_config* config);
+int pico_sync(int file);
+lfs_soff_t pico_size(int file);
+int pico_mkdir(const char* path);
+int pico_dir_open(lfs_dir_t* dir, const char* path);
+int pico_dir_close(lfs_dir_t* dir);
+int pico_dir_read(lfs_dir_t* dir, struct lfs_info* info);
+int pico_dir_seek(lfs_dir_t* dir, lfs_off_t off);
+lfs_soff_t pico_dir_tell(lfs_dir_t* dir);
+int pico_dir_rewind(lfs_dir_t* dir);
+int pico_fs_traverse(int (*cb)(void*, lfs_block_t), void* data);
+int pico_migrate(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _HAL_

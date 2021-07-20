@@ -33,27 +33,27 @@ int main(void) {
     int file;
 
     // mount the filesystem
-    if (posix_mount((c | ' ') == 'y') != LFS_ERR_OK) {
+    if (pico_mount((c | ' ') == 'y') != LFS_ERR_OK) {
         printf("Error mounting FS\n");
         exit;
     }
-    struct posix_fsstat_t stat;
-    posix_fsstat(&stat);
+    struct pico_fsstat_t stat;
+    pico_fsstat(&stat);
     printf("FS: blocks %d, block size %d, used %d\n", (int)stat.block_count, (int)stat.block_size,
            (int)stat.blocks_used);
     // read current count
-    file = posix_open("boot_count", LFS_O_RDWR | LFS_O_CREAT);
+    file = pico_open("boot_count", LFS_O_RDWR | LFS_O_CREAT);
     boot_count = 0;
-    posix_read(file, &boot_count, sizeof(boot_count));
+    pico_read(file, &boot_count, sizeof(boot_count));
     boot_count += 1;
-    posix_rewind(file);
-    posix_write(file, &boot_count, sizeof(boot_count));
+    pico_rewind(file);
+    pico_write(file, &boot_count, sizeof(boot_count));
 
     // remember the storage is not updated until the file is closed successfully
-    posix_close(file);
+    pico_close(file);
 
     // release any resources we were using
-    posix_unmount();
+    pico_unmount();
 
     // print the boot count
     printf("boot_count: %d\n", (int)boot_count);

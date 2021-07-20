@@ -17,25 +17,25 @@
 
 #define FS_SIZE (256 * 1024)
 
-static int pico_read(const struct lfs_config* c, lfs_block_t block, lfs_off_t off, void* buffer,
-                     lfs_size_t size);
+static int pico_hal_read(const struct lfs_config* c, lfs_block_t block, lfs_off_t off, void* buffer,
+                         lfs_size_t size);
 
-static int pico_prog(const struct lfs_config* c, lfs_block_t block, lfs_off_t off,
-                     const void* buffer, lfs_size_t size);
+static int pico_hal_prog(const struct lfs_config* c, lfs_block_t block, lfs_off_t off,
+                         const void* buffer, lfs_size_t size);
 
-static int pico_erase(const struct lfs_config* c, lfs_block_t block);
+static int pico_hal_erase(const struct lfs_config* c, lfs_block_t block);
 
-static int pico_sync(const struct lfs_config* c);
+static int pico_hal_sync(const struct lfs_config* c);
 
 // configuration of the filesystem is provided by this struct
 // for Pico: prog size = 256, block size = 4096, so cache is 8K
 // minimum cache = block size, must be multiple
 struct lfs_config pico_cfg = {
     // block device operations
-    .read = pico_read,
-    .prog = pico_prog,
-    .erase = pico_erase,
-    .sync = pico_sync,
+    .read = pico_hal_read,
+    .prog = pico_hal_prog,
+    .erase = pico_hal_erase,
+    .sync = pico_hal_sync,
     // block device configuration
     .read_size = 1,
     .prog_size = FLASH_PAGE_SIZE,
@@ -53,8 +53,8 @@ lfs_t pico_lfs;
 // file system offset in flash
 #define FS_BASE (PICO_FLASH_SIZE_BYTES - FS_SIZE)
 
-static int pico_read(const struct lfs_config* c, lfs_block_t block, lfs_off_t off, void* buffer,
-                     lfs_size_t size) {
+static int pico_hal_read(const struct lfs_config* c, lfs_block_t block, lfs_off_t off, void* buffer,
+                         lfs_size_t size) {
     (void)c;
     // read flash via XIP mapped space
     uint8_t* p =
@@ -63,8 +63,8 @@ static int pico_read(const struct lfs_config* c, lfs_block_t block, lfs_off_t of
     return LFS_ERR_OK;
 }
 
-static int pico_prog(const struct lfs_config* c, lfs_block_t block, lfs_off_t off,
-                     const void* buffer, lfs_size_t size) {
+static int pico_hal_prog(const struct lfs_config* c, lfs_block_t block, lfs_off_t off,
+                         const void* buffer, lfs_size_t size) {
     (void)c;
     uint32_t p = (block * pico_cfg.block_size) + off;
     // program with SDK
@@ -72,7 +72,7 @@ static int pico_prog(const struct lfs_config* c, lfs_block_t block, lfs_off_t of
     return LFS_ERR_OK;
 }
 
-static int pico_erase(const struct lfs_config* c, lfs_block_t block) {
+static int pico_hal_erase(const struct lfs_config* c, lfs_block_t block) {
     uint32_t off = block * pico_cfg.block_size;
     (void)c;
     // erase with SDK
@@ -80,7 +80,7 @@ static int pico_erase(const struct lfs_config* c, lfs_block_t block) {
     return LFS_ERR_OK;
 }
 
-static int pico_sync(const struct lfs_config* c) {
+static int pico_hal_sync(const struct lfs_config* c) {
     (void)c;
     // nothing to do!
     return LFS_ERR_OK;
@@ -96,63 +96,63 @@ float hal_elapsed(void) { return (time_us_32() - tm) / 1000000.0; }
 
 // posix emulation
 
-int posix_errno;
+int pico_errno;
 
-int posix_mount(bool format) {
+int pico_mount(bool format) {
     if (format)
         lfs_format(&pico_lfs, &pico_cfg);
     // mount the filesystem
     return lfs_mount(&pico_lfs, &pico_cfg);
 }
 
-int posix_open(const char* path, int flags) {
+int pico_open(const char* path, int flags) {
     lfs_file_t* file = lfs_malloc(sizeof(lfs_file_t));
     if (file == NULL)
         return -1;
     int err = lfs_file_open(&pico_lfs, file, path, flags);
     if (err != LFS_ERR_OK) {
-        posix_errno = err;
+        pico_errno = err;
         return -1;
     }
     return (int)file;
 }
 
-int posix_close(int file) {
+int pico_close(int file) {
     return lfs_file_close(&pico_lfs, (lfs_file_t*)file);
     lfs_free((lfs_file_t*)file);
 }
 
-lfs_size_t posix_write(int file, const void* buffer, lfs_size_t size) {
+lfs_size_t pico_write(int file, const void* buffer, lfs_size_t size) {
     return lfs_file_write(&pico_lfs, (lfs_file_t*)file, buffer, size);
 }
 
-lfs_size_t posix_read(int file, void* buffer, lfs_size_t size) {
+lfs_size_t pico_read(int file, void* buffer, lfs_size_t size) {
     return lfs_file_read(&pico_lfs, (lfs_file_t*)file, buffer, size);
 }
 
-int posix_rewind(int file) { return lfs_file_rewind(&pico_lfs, (lfs_file_t*)file); }
+int pico_rewind(int file) { return lfs_file_rewind(&pico_lfs, (lfs_file_t*)file); }
 
-int posix_unmount(void) { return lfs_unmount(&pico_lfs); }
+int pico_unmount(void) { return lfs_unmount(&pico_lfs); }
 
-int posix_remove(const char* path) { return lfs_remove(&pico_lfs, path); }
+int pico_remove(const char* path) { return lfs_remove(&pico_lfs, path); }
 
-int posix_rename(const char* oldpath, const char* newpath) {
+int pico_rename(const char* oldpath, const char* newpath) {
     return lfs_rename(&pico_lfs, oldpath, newpath);
 }
 
-int posix_fsstat(struct posix_fsstat_t* stat) {
+int pico_fsstat(struct pico_fsstat_t* stat) {
     stat->block_count = pico_cfg.block_count;
     stat->block_size = pico_cfg.block_size;
     stat->blocks_used = lfs_fs_size(&pico_lfs);
     return LFS_ERR_OK;
 }
 
-lfs_soff_t posix_lseek(int file, lfs_soff_t off, int whence) {
+lfs_soff_t pico_lseek(int file, lfs_soff_t off, int whence) {
     return lfs_file_seek(&pico_lfs, (lfs_file_t*)file, off, whence);
 }
 
-int posix_truncate(int file, lfs_off_t size) {
+int pico_truncate(int file, lfs_off_t size) {
     return lfs_file_truncate(&pico_lfs, (lfs_file_t*)file, size);
 }
 
-lfs_soff_t posix_tell(int file) { return lfs_file_tell(&pico_lfs, (lfs_file_t*)file); }
+lfs_soff_t pico_tell(int file) { return lfs_file_tell(&pico_lfs, (lfs_file_t*)file); }
