@@ -13,7 +13,7 @@
 #include "hardware/regs/addressmap.h"
 #include "pico/time.h"
 
-#include "lfs/pico_hal.h"
+#include "pico_hal.h"
 
 #define FS_SIZE (256 * 1024)
 

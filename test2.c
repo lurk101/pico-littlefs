@@ -14,7 +14,7 @@
 #include "pico/stdlib.h"
 #include "pico/time.h"
 
-#include "lfs/pico_hal.h"
+#include "pico_hal.h"
 
 #define FILE_SIZE (200 * 1024)
 #define BUF_WRDS (1024 / sizeof(uint32_t))

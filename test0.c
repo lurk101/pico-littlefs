@@ -12,7 +12,7 @@
 #include "hardware/regs/addressmap.h"
 #include "pico/stdio.h"
 
-#include "lfs/pico_hal.h"
+#include "pico_hal.h"
 
 // application entry point
 int main(void) {
@@ -48,6 +48,8 @@ int main(void) {
     boot_count += 1;
     pico_rewind(file);
     pico_write(file, &boot_count, sizeof(boot_count));
+    pico_rewind(file);
+	int pos = pico_lseek(file, 0, LFS_SEEK_END);
 
     // remember the storage is not updated until the file is closed successfully
     pico_close(file);
@@ -57,4 +59,5 @@ int main(void) {
 
     // print the boot count
     printf("boot_count: %d\n", (int)boot_count);
+    printf("file size: %d\n", pos);
 }
