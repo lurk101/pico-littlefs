@@ -11,6 +11,7 @@
 
 #include "hardware/flash.h"
 #include "hardware/regs/addressmap.h"
+#include "hardware/sync.h"
 #include "pico/time.h"
 
 #include "pico_hal.h"
@@ -68,7 +69,9 @@ static int pico_hal_prog(const struct lfs_config* c, lfs_block_t block, lfs_off_
     (void)c;
     uint32_t p = (block * pico_cfg.block_size) + off;
     // program with SDK
+    uint32_t ints = save_and_disable_interrupts();
     flash_range_program(FS_BASE + p, buffer, size);
+    restore_interrupts(ints);
     return LFS_ERR_OK;
 }
 
@@ -76,7 +79,9 @@ static int pico_hal_erase(const struct lfs_config* c, lfs_block_t block) {
     uint32_t off = block * pico_cfg.block_size;
     (void)c;
     // erase with SDK
+    uint32_t ints = save_and_disable_interrupts();
     flash_range_erase(FS_BASE + off, pico_cfg.block_size);
+    restore_interrupts(ints);
     return LFS_ERR_OK;
 }
 
