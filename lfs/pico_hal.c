@@ -57,6 +57,8 @@ lfs_t pico_lfs;
 static int pico_hal_read(const struct lfs_config* c, lfs_block_t block, lfs_off_t off, void* buffer,
                          lfs_size_t size) {
     (void)c;
+    assert(block < pico_cfg.block_count);
+    assert(off + size <= pico_cfg.block_size);
     // read flash via XIP mapped space
     uint8_t* p =
         (uint8_t*)(XIP_NOCACHE_NOALLOC_BASE + FS_BASE + (block * pico_cfg.block_size) + off);
@@ -67,8 +69,9 @@ static int pico_hal_read(const struct lfs_config* c, lfs_block_t block, lfs_off_
 static int pico_hal_prog(const struct lfs_config* c, lfs_block_t block, lfs_off_t off,
                          const void* buffer, lfs_size_t size) {
     (void)c;
-    uint32_t p = FS_BASE + (block * pico_cfg.block_size) + off;
+    assert(block < pico_cfg.block_count);
     // program with SDK
+    uint32_t p = FS_BASE + (block * pico_cfg.block_size) + off;
     uint32_t ints = save_and_disable_interrupts();
     flash_range_program(p, buffer, size);
     restore_interrupts(ints);
@@ -76,9 +79,10 @@ static int pico_hal_prog(const struct lfs_config* c, lfs_block_t block, lfs_off_
 }
 
 static int pico_hal_erase(const struct lfs_config* c, lfs_block_t block) {
-    uint32_t p = FS_BASE + block * pico_cfg.block_size;
     (void)c;
+    assert(block < pico_cfg.block_count);
     // erase with SDK
+    uint32_t p = FS_BASE + block * pico_cfg.block_size;
     uint32_t ints = save_and_disable_interrupts();
     flash_range_erase(p, pico_cfg.block_size);
     restore_interrupts(ints);
