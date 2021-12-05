@@ -67,20 +67,20 @@ static int pico_hal_read(const struct lfs_config* c, lfs_block_t block, lfs_off_
 static int pico_hal_prog(const struct lfs_config* c, lfs_block_t block, lfs_off_t off,
                          const void* buffer, lfs_size_t size) {
     (void)c;
-    uint32_t p = (block * pico_cfg.block_size) + off;
+    uint32_t p = FS_BASE + (block * pico_cfg.block_size) + off;
     // program with SDK
     uint32_t ints = save_and_disable_interrupts();
-    flash_range_program(FS_BASE + p, buffer, size);
+    flash_range_program(p, buffer, size);
     restore_interrupts(ints);
     return LFS_ERR_OK;
 }
 
 static int pico_hal_erase(const struct lfs_config* c, lfs_block_t block) {
-    uint32_t off = block * pico_cfg.block_size;
+    uint32_t p = FS_BASE + block * pico_cfg.block_size;
     (void)c;
     // erase with SDK
     uint32_t ints = save_and_disable_interrupts();
-    flash_range_erase(FS_BASE + off, pico_cfg.block_size);
+    flash_range_erase(p, pico_cfg.block_size);
     restore_interrupts(ints);
     return LFS_ERR_OK;
 }
@@ -101,8 +101,6 @@ float hal_elapsed(void) { return (time_us_32() - tm) / 1000000.0; }
 
 // posix emulation
 
-int pico_errno;
-
 int pico_mount(bool format) {
     if (format)
         lfs_format(&pico_lfs, &pico_cfg);
@@ -115,10 +113,8 @@ int pico_open(const char* path, int flags) {
     if (file == NULL)
         return -1;
     int err = lfs_file_open(&pico_lfs, file, path, flags);
-    if (err != LFS_ERR_OK) {
-        pico_errno = err;
+    if (err != LFS_ERR_OK)
         return -1;
-    }
     return (int)file;
 }
 
