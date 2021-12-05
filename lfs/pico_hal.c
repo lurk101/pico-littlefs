@@ -47,7 +47,7 @@ struct lfs_config pico_cfg = {
     .block_cycles = 500,
 };
 
-lfs_t pico_lfs;
+lfs_t lfs;
 
 // Pico specific hardware abstraction functions
 
@@ -107,102 +107,92 @@ float hal_elapsed(void) { return (time_us_32() - tm) / 1000000.0; }
 
 int pico_mount(bool format) {
     if (format)
-        lfs_format(&pico_lfs, &pico_cfg);
+        lfs_format(&pico_cfg);
     // mount the filesystem
-    return lfs_mount(&pico_lfs, &pico_cfg);
+    return lfs_mount(&pico_cfg);
 }
 
 int pico_open(const char* path, int flags) {
     lfs_file_t* file = lfs_malloc(sizeof(lfs_file_t));
     if (file == NULL)
-        return -1;
-    int err = lfs_file_open(&pico_lfs, file, path, flags);
+        return LFS_ERR_NOMEM;
+    int err = lfs_file_open(file, path, flags);
     if (err != LFS_ERR_OK)
-        return -1;
+        return err;
     return (int)file;
 }
 
 int pico_close(int file) {
-    int res = lfs_file_close(&pico_lfs, (lfs_file_t*)file);
+    int res = lfs_file_close((lfs_file_t*)file);
     lfs_free((lfs_file_t*)file);
     return res;
 }
 
 lfs_size_t pico_write(int file, const void* buffer, lfs_size_t size) {
-    return lfs_file_write(&pico_lfs, (lfs_file_t*)file, buffer, size);
+    return lfs_file_write((lfs_file_t*)file, buffer, size);
 }
 
 lfs_size_t pico_read(int file, void* buffer, lfs_size_t size) {
-    return lfs_file_read(&pico_lfs, (lfs_file_t*)file, buffer, size);
+    return lfs_file_read((lfs_file_t*)file, buffer, size);
 }
 
-int pico_rewind(int file) { return lfs_file_rewind(&pico_lfs, (lfs_file_t*)file); }
+int pico_rewind(int file) { return lfs_file_rewind((lfs_file_t*)file); }
 
-int pico_unmount(void) { return lfs_unmount(&pico_lfs); }
+int pico_unmount(void) { return lfs_unmount(); }
 
-int pico_remove(const char* path) { return lfs_remove(&pico_lfs, path); }
+int pico_remove(const char* path) { return lfs_remove(path); }
 
-int pico_rename(const char* oldpath, const char* newpath) {
-    return lfs_rename(&pico_lfs, oldpath, newpath);
-}
+int pico_rename(const char* oldpath, const char* newpath) { return lfs_rename(oldpath, newpath); }
 
 int pico_fsstat(struct pico_fsstat_t* stat) {
     stat->block_count = pico_cfg.block_count;
     stat->block_size = pico_cfg.block_size;
-    stat->blocks_used = lfs_fs_size(&pico_lfs);
+    stat->blocks_used = lfs_fs_size();
     return LFS_ERR_OK;
 }
 
 lfs_soff_t pico_lseek(int file, lfs_soff_t off, int whence) {
-    return lfs_file_seek(&pico_lfs, (lfs_file_t*)file, off, whence);
+    return lfs_file_seek((lfs_file_t*)file, off, whence);
 }
 
-int pico_truncate(int file, lfs_off_t size) {
-    return lfs_file_truncate(&pico_lfs, (lfs_file_t*)file, size);
-}
+int pico_truncate(int file, lfs_off_t size) { return lfs_file_truncate((lfs_file_t*)file, size); }
 
-lfs_soff_t pico_tell(int file) { return lfs_file_tell(&pico_lfs, (lfs_file_t*)file); }
+lfs_soff_t pico_tell(int file) { return lfs_file_tell((lfs_file_t*)file); }
 
-int pico_stat(const char* path, struct lfs_info* info) { return lfs_stat(&pico_lfs, path, info); }
+int pico_stat(const char* path, struct lfs_info* info) { return lfs_stat(path, info); }
 
 lfs_ssize_t pico_getattr(const char* path, uint8_t type, void* buffer, lfs_size_t size) {
-    return lfs_getattr(&pico_lfs, path, type, buffer, size);
+    return lfs_getattr(path, type, buffer, size);
 }
 
 int pico_setattr(const char* path, uint8_t type, const void* buffer, lfs_size_t size) {
-    return lfs_setattr(&pico_lfs, path, type, buffer, size);
+    return lfs_setattr(path, type, buffer, size);
 }
 
-int pico_removeattr(const char* path, uint8_t type) {
-    return lfs_removeattr(&pico_lfs, path, type);
-}
+int pico_removeattr(const char* path, uint8_t type) { return lfs_removeattr(path, type); }
 
 int pico_opencfg(int file, const char* path, int flags, const struct lfs_file_config* config) {
-    return lfs_file_opencfg(&pico_lfs, (lfs_file_t*)file, path, flags, config);
+    return lfs_file_opencfg((lfs_file_t*)file, path, flags, config);
 }
 
-int pico_fflush(int file) { return lfs_file_sync(&pico_lfs, (lfs_file_t*)file); }
+int pico_fflush(int file) { return lfs_file_sync((lfs_file_t*)file); }
 
-lfs_soff_t pico_size(int file) { return lfs_file_size(&pico_lfs, (lfs_file_t*)file); }
+lfs_soff_t pico_size(int file) { return lfs_file_size((lfs_file_t*)file); }
 
-int pico_mkdir(const char* path) { return lfs_mkdir(&pico_lfs, path); }
+int pico_mkdir(const char* path) { return lfs_mkdir(path); }
 
-int pico_dir_open(int dir, const char* path) {
-    return lfs_dir_open(&pico_lfs, (lfs_dir_t*)dir, path);
-}
+int pico_dir_open(int dir, const char* path) { return lfs_dir_open((lfs_dir_t*)dir, path); }
 
-int pico_dir_close(int dir) { return lfs_dir_close(&pico_lfs, (lfs_dir_t*)dir); }
+int pico_dir_close(int dir) { return lfs_dir_close((lfs_dir_t*)dir); }
 
-int pico_dir_read(int dir, struct lfs_info* info) {
-    return lfs_dir_read(&pico_lfs, (lfs_dir_t*)dir, info);
-}
+int pico_dir_read(int dir, struct lfs_info* info) { return lfs_dir_read((lfs_dir_t*)dir, info); }
 
-int pico_dir_seek(int dir, lfs_off_t off) { return lfs_dir_seek(&pico_lfs, (lfs_dir_t*)dir, off); }
+int pico_dir_seek(int dir, lfs_off_t off) { return lfs_dir_seek((lfs_dir_t*)dir, off); }
 
-lfs_soff_t pico_dir_tell(int dir) { return lfs_dir_tell(&pico_lfs, (lfs_dir_t*)dir); }
+lfs_soff_t pico_dir_tell(int dir) { return lfs_dir_tell((lfs_dir_t*)dir); }
 
-int pico_dir_rewind(int dir) { return lfs_dir_rewind(&pico_lfs, (lfs_dir_t*)dir); }
+int pico_dir_rewind(int dir) { return lfs_dir_rewind((lfs_dir_t*)dir); }
 
 int pico_fs_traverse(int (*cb)(void*, lfs_block_t), void* data) {
-    return lfs_fs_traverse(&pico_lfs, cb, data);
+    return lfs_fs_traverse(cb, data);
 }
