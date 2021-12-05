@@ -123,8 +123,9 @@ int pico_open(const char* path, int flags) {
 }
 
 int pico_close(int file) {
-    return lfs_file_close(&pico_lfs, (lfs_file_t*)file);
+    int res = lfs_file_close(&pico_lfs, (lfs_file_t*)file);
     lfs_free((lfs_file_t*)file);
+    return res;
 }
 
 lfs_size_t pico_write(int file, const void* buffer, lfs_size_t size) {
