@@ -49,6 +49,8 @@ lfs_soff_t pico_lseek(int file, lfs_soff_t off, int whence);
 int pico_truncate(int file, lfs_off_t size);
 lfs_soff_t pico_tell(int file);
 
+const char* errmsg(int err);
+
 // untested
 int pico_stat(const char* path, struct lfs_info* info);
 lfs_ssize_t pico_getattr(const char* path, uint8_t type, void* buffer, lfs_size_t size);
