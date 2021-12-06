@@ -47,8 +47,6 @@ struct lfs_config pico_cfg = {
     .block_cycles = 500,
 };
 
-lfs_t lfs;
-
 // Pico specific hardware abstraction functions
 
 // file system offset in flash
@@ -195,4 +193,29 @@ int pico_dir_rewind(int dir) { return lfs_dir_rewind((lfs_dir_t*)dir); }
 
 int pico_fs_traverse(int (*cb)(void*, lfs_block_t), void* data) {
     return lfs_fs_traverse(cb, data);
+}
+
+const char* errmsg(int err) {
+    static const struct {
+        int err;
+        char* text;
+    } mesgs[] = {{LFS_ERR_OK, "No error"},
+                 {LFS_ERR_IO, "Error during device operation"},
+                 {LFS_ERR_CORRUPT, "Corrupted"},
+                 {LFS_ERR_NOENT, "No directory entry"},
+                 {LFS_ERR_EXIST, "Entry already exists"},
+                 {LFS_ERR_NOTDIR, "Entry is not a dir"},
+                 {LFS_ERR_ISDIR, "Entry is a dir"},
+                 {LFS_ERR_NOTEMPTY, "Dir is not empty"},
+                 {LFS_ERR_BADF, "Bad file number"},
+                 {LFS_ERR_FBIG, "File too large"},
+                 {LFS_ERR_INVAL, "Invalid parameter"},
+                 {LFS_ERR_NOSPC, "No space left on device"},
+                 {LFS_ERR_NOMEM, "No more memory available"},
+                 {LFS_ERR_NOATTR, "No data/attr available"},
+                 {LFS_ERR_NAMETOOLONG, "File name too long"}};
+    for (int i = 0; i < sizeof(mesgs) / sizeof(mesgs[0]); i++)
+        if (err == mesgs[i].err)
+            return mesgs[i].text;
+    return "Unknown error";
 }
