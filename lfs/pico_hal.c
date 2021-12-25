@@ -115,8 +115,10 @@ int pico_open(const char* path, int flags) {
     if (file == NULL)
         return LFS_ERR_NOMEM;
     int err = lfs_file_open(file, path, flags);
-    if (err != LFS_ERR_OK)
+    if (err != LFS_ERR_OK){
+        lfs_free(file);
         return err;
+    }
     return (int)file;
 }
 
