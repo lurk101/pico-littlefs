@@ -23,26 +23,18 @@ static uint32_t buf[BUF_WRDS];
 
 // application entry point
 int main(void) {
-
-    const char* fn = "big_file";
-
-    // variables used by the filesystem
-    int file;
-
     // initialize the pico SDK
     stdio_init_all();
     printf("\033[H\033[J"); // try to clear the screen
-
     // mount the filesystem
     pico_mount(false);
-
+    const char* fn = "big_file";
+    int file;
     struct pico_fsstat_t stat;
     pico_fsstat(&stat);
     printf("FS: blocks %d, block size %d, used %d\n", (int)stat.block_count, (int)stat.block_size,
            (int)stat.blocks_used);
-
     uint32_t i, n;
-
     printf("Creating %dK file\n", (int)(FILE_SIZE / 1024));
     hal_start();
     file = pico_open(fn, LFS_O_WRONLY | LFS_O_CREAT);
@@ -71,7 +63,6 @@ int main(void) {
         return -1;
     }
     printf("elapsed %f seconds\n", hal_elapsed());
-
     printf("reading %dK file\n", (int)(FILE_SIZE / 1024));
     hal_start();
     file = pico_open(fn, LFS_O_RDONLY);
@@ -95,7 +86,6 @@ int main(void) {
     }
     pico_close(file);
     printf("elapsed %f seconds\n", hal_elapsed());
-
     printf("removing file\n");
     if (pico_remove(fn) < 0) {
         printf("remove fails\n");
@@ -109,6 +99,5 @@ int main(void) {
     if (n < FILE_SIZE) {
         return -1;
     }
-
     printf("pass\n");
 }

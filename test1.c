@@ -20,20 +20,14 @@ const uint32_t n_files = 32;
 
 // application entry point
 int main(void) {
-
-    // variables used by the filesystem
-    int file;
-
     // initialize the pico SDK
     stdio_init_all();
     printf("\033[H\033[J"); // try to clear the screen
-
     // mount the filesystem
     pico_mount(false);
-
+    int file;
     uint32_t i;
     char fn[32], fn2[32];
-
     printf("Creating %d files\n", (int)n_files);
     hal_start();
     for (i = 0; i < n_files; i++) {
@@ -52,12 +46,10 @@ int main(void) {
         pico_close(file);
     }
     printf("elapsed %f seconds\n", hal_elapsed());
-
     struct pico_fsstat_t stat;
     pico_fsstat(&stat);
     printf("FS: blocks %d, block size %d, used %d\n", (int)stat.block_count, (int)stat.block_size,
            (int)stat.blocks_used);
-
     printf("Renaming %d files\n", (int)n_files);
     hal_start();
     for (i = 0; i < n_files; i++) {
@@ -70,11 +62,9 @@ int main(void) {
         }
     }
     printf("elapsed %f seconds\n", hal_elapsed());
-
     pico_fsstat(&stat);
     printf("FS: blocks %d, block size %d, used %d\n", (int)stat.block_count, (int)stat.block_size,
            (int)stat.blocks_used);
-
     printf("Verifying then removing %d files\n", (int)n_files);
     char buf[32];
     hal_start();
@@ -102,12 +92,9 @@ int main(void) {
     }
     printf("elapsed %f seconds\n", hal_elapsed());
     // release any resources we were using
-
     pico_fsstat(&stat);
     printf("FS: blocks %d, block size %d, used %d\n", (int)stat.block_count, (int)stat.block_size,
            (int)stat.blocks_used);
-
     pico_unmount();
-
     printf("pass\n");
 }

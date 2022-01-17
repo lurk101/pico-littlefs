@@ -9,24 +9,29 @@
  *
  */
 
+#include <limits.h>
+
 #include "hardware/flash.h"
 #include "hardware/regs/addressmap.h"
 #include "hardware/sync.h"
+#include "pico/mutex.h"
 #include "pico/time.h"
 
 #include "pico_hal.h"
 
 #define FS_SIZE (256 * 1024)
 
-static int pico_hal_read(const struct lfs_config* c, lfs_block_t block, lfs_off_t off, void* buffer,
-                         lfs_size_t size);
+static int pico_hal_read(lfs_block_t block, lfs_off_t off, void* buffer, lfs_size_t size);
 
-static int pico_hal_prog(const struct lfs_config* c, lfs_block_t block, lfs_off_t off,
-                         const void* buffer, lfs_size_t size);
+static int pico_hal_prog(lfs_block_t block, lfs_off_t off, const void* buffer, lfs_size_t size);
 
-static int pico_hal_erase(const struct lfs_config* c, lfs_block_t block);
+static int pico_hal_erase(lfs_block_t block);
 
-static int pico_hal_sync(const struct lfs_config* c);
+static int pico_hal_sync(void);
+
+static int pico_lock(void);
+
+static int pico_unlock(void);
 
 // configuration of the filesystem is provided by this struct
 // for Pico: prog size = 256, block size = 4096, so cache is 8K
@@ -37,6 +42,10 @@ struct lfs_config pico_cfg = {
     .prog = pico_hal_prog,
     .erase = pico_hal_erase,
     .sync = pico_hal_sync,
+#ifdef LFS_THREADSAFE
+    .lock = pico_lock,
+    .unlock = pico_unlock,
+#endif
     // block device configuration
     .read_size = 1,
     .prog_size = FLASH_PAGE_SIZE,
@@ -52,9 +61,7 @@ struct lfs_config pico_cfg = {
 // file system offset in flash
 #define FS_BASE (PICO_FLASH_SIZE_BYTES - FS_SIZE)
 
-static int pico_hal_read(const struct lfs_config* c, lfs_block_t block, lfs_off_t off, void* buffer,
-                         lfs_size_t size) {
-    (void)c;
+static int pico_hal_read(lfs_block_t block, lfs_off_t off, void* buffer, lfs_size_t size) {
     assert(block < pico_cfg.block_count);
     assert(off + size <= pico_cfg.block_size);
     // read flash via XIP mapped space
@@ -64,9 +71,7 @@ static int pico_hal_read(const struct lfs_config* c, lfs_block_t block, lfs_off_
     return LFS_ERR_OK;
 }
 
-static int pico_hal_prog(const struct lfs_config* c, lfs_block_t block, lfs_off_t off,
-                         const void* buffer, lfs_size_t size) {
-    (void)c;
+static int pico_hal_prog(lfs_block_t block, lfs_off_t off, const void* buffer, lfs_size_t size) {
     assert(block < pico_cfg.block_count);
     // program with SDK
     uint32_t p = FS_BASE + (block * pico_cfg.block_size) + off;
@@ -76,8 +81,7 @@ static int pico_hal_prog(const struct lfs_config* c, lfs_block_t block, lfs_off_
     return LFS_ERR_OK;
 }
 
-static int pico_hal_erase(const struct lfs_config* c, lfs_block_t block) {
-    (void)c;
+static int pico_hal_erase(lfs_block_t block) {
     assert(block < pico_cfg.block_count);
     // erase with SDK
     uint32_t p = FS_BASE + block * pico_cfg.block_size;
@@ -87,11 +91,25 @@ static int pico_hal_erase(const struct lfs_config* c, lfs_block_t block) {
     return LFS_ERR_OK;
 }
 
-static int pico_hal_sync(const struct lfs_config* c) {
-    (void)c;
+static int pico_hal_sync(void) {
     // nothing to do!
     return LFS_ERR_OK;
 }
+
+#ifdef LFS_THREADSAFE
+
+static recursive_mutex_t fs_mtx;
+
+static int pico_lock(void) {
+    recursive_mutex_enter_blocking(&fs_mtx);
+    return LFS_ERR_OK;
+}
+
+static int pico_unlock(void) {
+    recursive_mutex_exit(&fs_mtx);
+    return LFS_ERR_OK;
+}
+#endif
 
 // utility functions
 
@@ -104,6 +122,9 @@ float hal_elapsed(void) { return (time_us_32() - tm) / 1000000.0; }
 // posix emulation
 
 int pico_mount(bool format) {
+#ifdef LFS_THREADSAFE
+    recursive_mutex_init(&fs_mtx);
+#endif
     if (format)
         lfs_format(&pico_cfg);
     // mount the filesystem
@@ -193,11 +214,7 @@ lfs_soff_t pico_dir_tell(int dir) { return lfs_dir_tell((lfs_dir_t*)dir); }
 
 int pico_dir_rewind(int dir) { return lfs_dir_rewind((lfs_dir_t*)dir); }
 
-int pico_fs_traverse(int (*cb)(void*, lfs_block_t), void* data) {
-    return lfs_fs_traverse(cb, data);
-}
-
-const char* errmsg(int err) {
+const char* pico_errmsg(int err) {
     static const struct {
         int err;
         char* text;
@@ -216,6 +233,7 @@ const char* errmsg(int err) {
                  {LFS_ERR_NOMEM, "No more memory available"},
                  {LFS_ERR_NOATTR, "No data/attr available"},
                  {LFS_ERR_NAMETOOLONG, "File name too long"}};
+
     for (int i = 0; i < sizeof(mesgs) / sizeof(mesgs[0]); i++)
         if (err == mesgs[i].err)
             return mesgs[i].text;

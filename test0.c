@@ -9,7 +9,6 @@
  *
  */
 
-#include "hardware/regs/addressmap.h"
 #include "pico/stdio.h"
 
 #include "pico_hal.h"
@@ -26,12 +25,9 @@ int main(void) {
     printf("\n");
 
     // increment the boot count with each invocation
-
     lfs_size_t boot_count;
-
     // variables used by the filesystem
     int file;
-
     // mount the filesystem
     if (pico_mount((c | ' ') == 'y') != LFS_ERR_OK) {
         printf("Error mounting FS\n");
@@ -50,13 +46,10 @@ int main(void) {
     pico_write(file, &boot_count, sizeof(boot_count));
     pico_rewind(file);
 	int pos = pico_lseek(file, 0, LFS_SEEK_END);
-
     // remember the storage is not updated until the file is closed successfully
     pico_close(file);
-
     // release any resources we were using
     pico_unmount();
-
     // print the boot count
     printf("boot_count: %d\n", (int)boot_count);
     printf("file size: %d\n", pos);
