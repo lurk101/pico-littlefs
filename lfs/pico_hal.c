@@ -22,15 +22,9 @@
 #define FS_SIZE (256 * 1024)
 
 static int pico_hal_read(lfs_block_t block, lfs_off_t off, void* buffer, lfs_size_t size);
-
 static int pico_hal_prog(lfs_block_t block, lfs_off_t off, const void* buffer, lfs_size_t size);
-
 static int pico_hal_erase(lfs_block_t block);
-
-static int pico_hal_sync(void);
-
 static int pico_lock(void);
-
 static int pico_unlock(void);
 
 // configuration of the filesystem is provided by this struct
@@ -41,8 +35,7 @@ struct lfs_config pico_cfg = {
     .read = pico_hal_read,
     .prog = pico_hal_prog,
     .erase = pico_hal_erase,
-    .sync = pico_hal_sync,
-#ifdef LFS_THREADSAFE
+#if LIB_PICO_MULTICORE
     .lock = pico_lock,
     .unlock = pico_unlock,
 #endif
@@ -53,28 +46,25 @@ struct lfs_config pico_cfg = {
     .block_count = FS_SIZE / FLASH_SECTOR_SIZE,
     .cache_size = FLASH_SECTOR_SIZE / 4,
     .lookahead_size = 32,
-    .block_cycles = 500,
-};
+    .block_cycles = 500};
 
 // Pico specific hardware abstraction functions
 
 // file system offset in flash
-#define FS_BASE (PICO_FLASH_SIZE_BYTES - FS_SIZE)
+const char* FS_BASE = (char*)(PICO_FLASH_SIZE_BYTES - FS_SIZE);
 
 static int pico_hal_read(lfs_block_t block, lfs_off_t off, void* buffer, lfs_size_t size) {
     assert(block < pico_cfg.block_count);
     assert(off + size <= pico_cfg.block_size);
     // read flash via XIP mapped space
-    uint8_t* p =
-        (uint8_t*)(XIP_NOCACHE_NOALLOC_BASE + FS_BASE + (block * pico_cfg.block_size) + off);
-    memcpy(buffer, p, size);
+    memcpy(buffer, FS_BASE + XIP_NOCACHE_NOALLOC_BASE + (block * pico_cfg.block_size) + off, size);
     return LFS_ERR_OK;
 }
 
 static int pico_hal_prog(lfs_block_t block, lfs_off_t off, const void* buffer, lfs_size_t size) {
     assert(block < pico_cfg.block_count);
     // program with SDK
-    uint32_t p = FS_BASE + (block * pico_cfg.block_size) + off;
+    uint32_t p = (uint32_t)FS_BASE + (block * pico_cfg.block_size) + off;
     uint32_t ints = save_and_disable_interrupts();
     flash_range_program(p, buffer, size);
     restore_interrupts(ints);
@@ -84,19 +74,14 @@ static int pico_hal_prog(lfs_block_t block, lfs_off_t off, const void* buffer, l
 static int pico_hal_erase(lfs_block_t block) {
     assert(block < pico_cfg.block_count);
     // erase with SDK
-    uint32_t p = FS_BASE + block * pico_cfg.block_size;
+    uint32_t p = (uint32_t)FS_BASE + block * pico_cfg.block_size;
     uint32_t ints = save_and_disable_interrupts();
     flash_range_erase(p, pico_cfg.block_size);
     restore_interrupts(ints);
     return LFS_ERR_OK;
 }
 
-static int pico_hal_sync(void) {
-    // nothing to do!
-    return LFS_ERR_OK;
-}
-
-#ifdef LFS_THREADSAFE
+#if LIB_PICO_MULTICORE
 
 static recursive_mutex_t fs_mtx;
 
@@ -122,7 +107,7 @@ float hal_elapsed(void) { return (time_us_32() - tm) / 1000000.0; }
 // posix emulation
 
 int pico_mount(bool format) {
-#ifdef LFS_THREADSAFE
+#if LIB_PICO_MULTICORE
     recursive_mutex_init(&fs_mtx);
 #endif
     if (format)

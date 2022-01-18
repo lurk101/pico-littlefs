@@ -12,10 +12,6 @@ cd b
 cmake ..
 make
 ```
-To build in thread safe operation (for multi-core) add the following to your CMakeLists.txt file.
-```
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DLFS_THREADSAFE")
-```
 Pertinent define near the top of file lfs/pico_hal.c determines the size of the flash file system
 located to the top of flash.
 ```
@@ -23,15 +19,14 @@ located to the top of flash.
 ```
 Functions
 ```
-// Mounts a littlefs
+// Mounts a file system
 //
-// Requires a littlefs object and config struct. Optionally formats
-// a new file system.
+// Optionally formats a new file system.
 //
 // Returns a negative error code on failure.
 int pico_mount(bool format);
 
-// Unmounts a littlefs
+// Unmounts a file system
 //
 // Returns a negative error code on failure.
 int pico_unmount(void);

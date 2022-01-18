@@ -15,6 +15,7 @@
 #include "pico/time.h"
 
 #include "pico_hal.h"
+#include "stdio_init.h"
 
 #define FILE_SIZE (200 * 1024)
 #define BUF_WRDS (1024 / sizeof(uint32_t))
@@ -23,10 +24,7 @@ static uint32_t buf[BUF_WRDS];
 
 // application entry point
 int main(void) {
-    // initialize the pico SDK
-    stdio_init_all();
-    printf("\033[H\033[J"); // try to clear the screen
-    // mount the filesystem
+    stdio_init();
     pico_mount(false);
     const char* fn = "big_file";
     int file;

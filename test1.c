@@ -13,6 +13,7 @@
 #include "pico/stdio.h"
 
 #include "pico_hal.h"
+#include "stdio_init.h"
 
 const char* fn_templ1 = "old%d.tst";
 const char* fn_templ2 = "new%d.tst";
@@ -20,10 +21,7 @@ const uint32_t n_files = 32;
 
 // application entry point
 int main(void) {
-    // initialize the pico SDK
-    stdio_init_all();
-    printf("\033[H\033[J"); // try to clear the screen
-    // mount the filesystem
+    stdio_init();
     pico_mount(false);
     int file;
     uint32_t i;

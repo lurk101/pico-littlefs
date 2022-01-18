@@ -174,11 +174,7 @@ struct lfs_config {
     // May return LFS_ERR_CORRUPT if the block should be considered bad.
     int (*erase)(lfs_block_t block);
 
-    // Sync the state of the underlying block device. Negative error codes
-    // are propogated to the user.
-    int (*sync)(void);
-
-#ifdef LFS_THREADSAFE
+#if LIB_PICO_MULTICORE
     // Lock the underlying block device. Negative error codes
     // are propogated to the user.
     int (*lock)(void);
@@ -300,7 +296,7 @@ struct lfs_file_config {
     // Optional list of custom attributes related to the file. If the file
     // is opened with read access, these attributes will be read from disk
     // during the open call. If the file is opened with write access, the
-    // attributes will be written to disk every file sync or close. This
+    // attributes will be written to disk every close. This
     // write occurs atomically with update to the file's contents.
     //
     // Custom attributes are uniquely identified by an 8-bit type and limited
@@ -659,7 +655,9 @@ int lfs_fs_traverse(int (*cb)(void*, lfs_block_t), void* data);
 
 // Allocate memory, only used if buffers are not provided to littlefs
 // Note, memory must be 64-bit aligned
-void* lfs_malloc(size_t size);
+static inline void* lfs_malloc(size_t size) {
+    return malloc(size);
+}
 
 #ifdef __cplusplus
 } /* extern "C" */

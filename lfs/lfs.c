@@ -165,15 +165,7 @@ static int lfs_bd_flush(lfs_cache_t* pcache, lfs_cache_t* rcache, bool validate)
 #ifndef LFS_READONLY
 static int lfs_bd_sync(lfs_cache_t* pcache, lfs_cache_t* rcache, bool validate) {
     lfs_cache_drop(rcache);
-
-    int err = lfs_bd_flush(pcache, rcache, validate);
-    if (err) {
-        return err;
-    }
-
-    err = lfs.cfg->sync();
-    LFS_ASSERT(err <= 0);
-    return err;
+    return lfs_bd_flush(pcache, rcache, validate);
 }
 #endif
 
@@ -3436,7 +3428,7 @@ static int lfs_deinit(void) {
 }
 
 // Thread-safe wrappers if enabled
-#ifdef LFS_THREADSAFE
+#if LIB_PICO_MULTICORE
 #define LFS_LOCK lfs.cfg->lock()
 #define LFS_UNLOCK lfs.cfg->unlock()
 #else
@@ -4506,24 +4498,6 @@ int lfs_fs_traverse(int (*cb)(void*, lfs_block_t), void* data) {
     LFS_TRACE("lfs_fs_traverse -> %d", err);
     LFS_UNLOCK;
     return err;
-}
-
-void* lfs_malloc(size_t size) {
-#ifndef LFS_NO_MALLOC
-    void* p;
-#ifdef LFS_THREADSAFE
-    if (LFS_LOCK != LFS_ERR_OK)
-        return NULL;
-#endif
-    p = malloc(size);
-#ifdef LFS_THREADSAFE
-    LFS_UNLOCK;
-#endif
-    return p;
-#else
-    (void)size;
-    return NULL;
-#endif
 }
 
 // Software CRC implementation with small lookup table
