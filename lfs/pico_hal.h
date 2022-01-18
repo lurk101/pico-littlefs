@@ -189,7 +189,7 @@ int pico_mkdir(const char* path);
 //
 // Once open a directory can be used with read to iterate over files.
 // Returns a negative error code on failure.
-int pico_dir_open(int dir, const char* path);
+int pico_dir_open(const char* path);
 
 // Close a directory
 //

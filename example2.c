@@ -24,78 +24,85 @@ static uint32_t buf[BUF_WRDS];
 
 // application entry point
 int main(void) {
+    // Initialize the console
     stdio_init();
+    // Set the RNG seed
+    printf("Hit any key\n");
+    getchar();
+    unsigned seed = time_us_32();
+    srand(seed);
+    // Mount the file system
     pico_mount(false);
-    const char* fn = "big_file";
-    int file;
+    // Display file system sizes
     struct pico_fsstat_t stat;
     pico_fsstat(&stat);
     printf("FS: blocks %d, block size %d, used %d\n", (int)stat.block_count, (int)stat.block_size,
            (int)stat.blocks_used);
+    // Create a big file
+    const char* fn = "big_file";
+    int file = -1;
     uint32_t i, n;
     printf("Creating %dK file\n", (int)(FILE_SIZE / 1024));
-    hal_start();
     file = pico_open(fn, LFS_O_WRONLY | LFS_O_CREAT);
+    int err = 0;
     if (file < 0) {
         printf("open fails\n");
-        return -1;
+        goto fail;
     }
     n = FILE_SIZE;
-    srand(12345);
     for (n = 0; n < FILE_SIZE; n += sizeof(buf)) {
         for (i = 0; i < BUF_WRDS; i++)
             buf[i] = rand();
         lfs_size_t len = pico_write(file, buf, sizeof(buf));
         if (sizeof(buf) != (uint32_t)len) {
             printf("write fails at %d returned %d\n", (int)n, (int)len);
-            break;
+            goto fail;
         }
     }
+    pico_close(file);
+    // Display file system sizes
     pico_fsstat(&stat);
     printf("FS: blocks %d, block size %d, used %d\n", (int)stat.block_count, (int)stat.block_size,
            (int)stat.blocks_used);
-    pico_close(file);
-    if (n < FILE_SIZE) {
-        pico_remove(fn);
-        pico_unmount();
-        return -1;
-    }
-    printf("elapsed %f seconds\n", hal_elapsed());
+    // Read back and verify the contensts
     printf("reading %dK file\n", (int)(FILE_SIZE / 1024));
-    hal_start();
     file = pico_open(fn, LFS_O_RDONLY);
     if (file < 0) {
         printf("open fails\n");
-        return -1;
+        goto fail;
     }
     n = FILE_SIZE;
-    srand(12345);
+    srand(seed);
     for (n = 0; n < FILE_SIZE; n += sizeof(buf)) {
         lfs_size_t len = pico_read(file, buf, sizeof(buf));
         if (sizeof(buf) != (uint32_t)len) {
             printf("read fails at %d returned %d\n", (int)n, (int)len);
-            break;
+            goto fail;
         }
         for (i = 0; i < BUF_WRDS; i++)
             if (buf[i] != (uint32_t)rand()) {
                 printf("data mismatch at %d\n", (int)n);
-                break;
+                goto fail;
             }
     }
     pico_close(file);
-    printf("elapsed %f seconds\n", hal_elapsed());
+    // Delete the file
     printf("removing file\n");
     if (pico_remove(fn) < 0) {
         printf("remove fails\n");
-        return -1;
+        goto fail;
     }
     pico_fsstat(&stat);
     printf("FS: blocks %d, block size %d, used %d\n", (int)stat.block_count, (int)stat.block_size,
            (int)stat.blocks_used);
     // release any resources we were using
     pico_unmount();
-    if (n < FILE_SIZE) {
-        return -1;
-    }
-    printf("pass\n");
+    printf("Pass\n");
+    return 0;
+fail:
+    if (file >= 0)
+        pico_close(file);
+    pico_unmount();
+    printf("Fail\n");
+    return -1;
 }

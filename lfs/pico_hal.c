@@ -187,9 +187,21 @@ lfs_soff_t pico_size(int file) { return lfs_file_size((lfs_file_t*)file); }
 
 int pico_mkdir(const char* path) { return lfs_mkdir(path); }
 
-int pico_dir_open(int dir, const char* path) { return lfs_dir_open((lfs_dir_t*)dir, path); }
+int pico_dir_open(const char* path) {
+	lfs_dir_t* dir = lfs_malloc(sizeof(lfs_dir_t));
+	if (dir == NULL)
+		return -1;
+	if (lfs_dir_open(dir, path) != LFS_ERR_OK) {
+		lfs_free(dir);
+		return -1;
+	}
+	return (int)dir;
+}
 
-int pico_dir_close(int dir) { return lfs_dir_close((lfs_dir_t*)dir); }
+int pico_dir_close(int dir) {
+	return lfs_dir_close((lfs_dir_t*)dir);
+	lfs_free((void*)dir);
+}
 
 int pico_dir_read(int dir, struct lfs_info* info) { return lfs_dir_read((lfs_dir_t*)dir, info); }
 
