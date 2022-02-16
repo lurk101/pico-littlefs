@@ -1,0 +1,6 @@
+[submodule "littlefs-lib"]
+	path = littlefs-lib
+	url = https://github.com/lurk101/littlefs-lib.git
+[submodule "stdinit-lib"]
+	path = stdinit-lib
+	url = https://github.com/lurk101/stdinit-lib.git

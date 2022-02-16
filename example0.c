@@ -12,7 +12,7 @@
 #include "pico/stdio.h"
 
 #include "pico_hal.h"
-#include "stdio_init.h"
+#include "stdinit.h"
 
 /* mount counter.
  * In this example we'll check increment the mount count file content.

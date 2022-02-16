@@ -9,11 +9,11 @@
  *
  */
 
-#include "hardware/regs/addressmap.h"
 #include "pico/stdio.h"
+#include "pico/stdlib.h"
 
 #include "pico_hal.h"
-#include "stdio_init.h"
+#include "stdinit.h"
 
 /* We'll create 32 files with randon names, verify them, rename them, reverify,
  * and delete them.

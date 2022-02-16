@@ -7,6 +7,7 @@ Building
 ```
 git clone https://github.com/lurk101/pico-littlefs.git
 cd pico-littlefs.git
+git submodule update --init
 mkdir b
 cd b
 cmake ..
